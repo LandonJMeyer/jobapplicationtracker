@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Application Tracker"
+description = "A focused job and internship application tracker that keeps submissions, stages, follow-up dates, and next actions organized in one clear workspace."
+version = "1.0.0"
+id = "artifacts/application-tracker"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18850
+
+[services.development]
+run = "pnpm --filter @workspace/application-tracker run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/application-tracker", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/application-tracker/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18850"
+BASE_PATH = "/"

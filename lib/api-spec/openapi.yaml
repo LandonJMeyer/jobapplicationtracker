@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: applications
+    description: Job and internship applications
+  - name: dashboard
+    description: Application tracking overview
 paths:
   /healthz:
     get:
@@ -24,7 +28,117 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /applications:
+    get:
+      operationId: listApplications
+      tags: [applications]
+      summary: List applications
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [All, Applied, Interviewing, Offer, Rejected, Withdrawn]
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Application"
+    post:
+      operationId: createApplication
+      tags: [applications]
+      summary: Create an application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationInput"
+      responses:
+        "201":
+          description: Created application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+  /applications/{id}:
+    get:
+      operationId: getApplication
+      tags: [applications]
+      summary: Get an application
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+      responses:
+        "200":
+          description: Application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "404":
+          description: Application not found
+    patch:
+      operationId: updateApplication
+      tags: [applications]
+      summary: Update an application
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationUpdate"
+      responses:
+        "200":
+          description: Updated application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "404":
+          description: Application not found
+    delete:
+      operationId: deleteApplication
+      tags: [applications]
+      summary: Delete an application
+      parameters:
+        - $ref: "#/components/parameters/ApplicationId"
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Application not found
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
 components:
+  parameters:
+    ApplicationId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +147,136 @@ components:
           type: string
       required:
         - status
-
+    Application:
+      type: object
+      required:
+        - id
+        - company
+        - role
+        - location
+        - type
+        - status
+        - submittedAt
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+        company:
+          type: string
+        role:
+          type: string
+        location:
+          type: string
+        type:
+          type: string
+          enum: [Full-time, Internship, Contract, Part-time]
+        status:
+          type: string
+          enum: [Applied, Interviewing, Offer, Rejected, Withdrawn]
+        submittedAt:
+          type: string
+          format: date
+        followUpAt:
+          type: [string, "null"]
+          format: date
+        link:
+          type: [string, "null"]
+        notes:
+          type: [string, "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ApplicationInput:
+      type: object
+      required:
+        - company
+        - role
+        - location
+        - type
+        - status
+        - submittedAt
+      properties:
+        company:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          minLength: 1
+        location:
+          type: string
+        type:
+          type: string
+          enum: [Full-time, Internship, Contract, Part-time]
+        status:
+          type: string
+          enum: [Applied, Interviewing, Offer, Rejected, Withdrawn]
+        submittedAt:
+          type: string
+          format: date
+        followUpAt:
+          type: [string, "null"]
+          format: date
+        link:
+          type: [string, "null"]
+        notes:
+          type: [string, "null"]
+    ApplicationUpdate:
+      type: object
+      properties:
+        company:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          minLength: 1
+        location:
+          type: string
+        type:
+          type: string
+          enum: [Full-time, Internship, Contract, Part-time]
+        status:
+          type: string
+          enum: [Applied, Interviewing, Offer, Rejected, Withdrawn]
+        submittedAt:
+          type: string
+          format: date
+        followUpAt:
+          type: [string, "null"]
+          format: date
+        link:
+          type: [string, "null"]
+        notes:
+          type: [string, "null"]
+    DashboardSummary:
+      type: object
+      required:
+        - total
+        - active
+        - followUps
+        - interviews
+        - offers
+        - statusCounts
+        - recentApplications
+      properties:
+        total:
+          type: integer
+        active:
+          type: integer
+        followUps:
+          type: integer
+        interviews:
+          type: integer
+        offers:
+          type: integer
+        statusCounts:
+          type: object
+          additionalProperties:
+            type: integer
+        recentApplications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Application"
