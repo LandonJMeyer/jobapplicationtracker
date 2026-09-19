@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { BarChart3, BriefcaseBusiness, ChevronRight, CircleHelp, Menu, Settings2, Sparkles, X } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const navItems = [
   { href: '/', label: 'Overview', icon: BarChart3 },
@@ -12,6 +12,12 @@ const navItems = [
 export function AppShell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [displayName, setDisplayName] = useState(() => localStorage.getItem('paceboard-name')?.trim() || 'Morgan Chen');
+  useEffect(() => {
+    const syncDisplayName = () => setDisplayName(localStorage.getItem('paceboard-name')?.trim() || 'Morgan Chen');
+    window.addEventListener('paceboard-name-change', syncDisplayName);
+    return () => window.removeEventListener('paceboard-name-change', syncDisplayName);
+  }, []);
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
       <aside className={`fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col bg-sidebar px-4 py-5 text-sidebar-foreground transition-transform duration-300 md:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -51,8 +57,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3 rounded-xl px-2 py-2.5">
             <div className="grid size-9 place-items-center rounded-full bg-[#e7b97a] font-display text-xs font-bold text-[#26384b]">MC</div>
             <div className="min-w-0">
-              <p className="truncate text-[12px] font-bold text-white">Morgan Chen</p>
-              <p className="text-[11px] text-sidebar-foreground/50">Candidate workspace</p>
+               <p className="truncate text-[12px] font-bold text-white">{displayName}</p>
+               <p className="text-[11px] text-sidebar-foreground/50">{displayName} workspace</p>
             </div>
             <span className="ml-auto rounded-md p-1 text-sidebar-foreground/50" title="Help center">
               <CircleHelp className="size-4" />

@@ -5,12 +5,17 @@ import { getGetDashboardSummaryQueryKey } from '@workspace/api-client-react';
 import { ApplicationDialog } from '@/components/application-dialog';
 import { ApplicationRow } from '@/components/application-list';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Dashboard() {
   const { data: summary, isLoading, isError, refetch } = useGetDashboardSummary({ query: { queryKey: getGetDashboardSummaryQueryKey() } });
   const [dialogOpen, setDialogOpen] = useState(false);
-  const displayName = localStorage.getItem('paceboard-name') || 'Candidate';
+  const [displayName, setDisplayName] = useState(() => localStorage.getItem('paceboard-name')?.trim() || 'Morgan Chen');
+  useEffect(() => {
+    const syncDisplayName = () => setDisplayName(localStorage.getItem('paceboard-name')?.trim() || 'Morgan Chen');
+    window.addEventListener('paceboard-name-change', syncDisplayName);
+    return () => window.removeEventListener('paceboard-name-change', syncDisplayName);
+  }, []);
   if (isLoading) return <DashboardSkeleton />;
   if (isError || !summary) return <ErrorState onRetry={() => refetch()} />;
   const maxCount = Math.max(...Object.values(summary.statusCounts), 1);
@@ -26,10 +31,10 @@ export default function Dashboard() {
         <Button className="w-fit rounded-xl px-4" onClick={() => setDialogOpen(true)} data-testid="button-add-application"><Plus /> Log application</Button>
       </div>
       <div className="rise-in rise-in-delay-1 mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Total applications" value={summary.total} detail={`${summary.active} still in motion`} icon={Target} tone="mint" />
-        <MetricCard label="Follow-ups due" value={summary.followUps} detail={summary.followUps ? 'Keep the thread warm' : 'Clear runway'} icon={CalendarClock} tone="amber" />
-        <MetricCard label="In conversation" value={summary.interviews} detail="Interviewing now" icon={Clock3} tone="blue" />
-        <MetricCard label="Offers" value={summary.offers} detail={summary.offers ? 'A strong signal' : 'Keep going'} icon={Trophy} tone="coral" />
+        <MetricCard href="/applications" label="Total applications" value={summary.total} detail={`${summary.active} still in motion`} icon={Target} tone="mint" />
+        <MetricCard href="/applications?filter=followups" label="Follow-ups due" value={summary.followUps} detail={summary.followUps ? 'Keep the thread warm' : 'Clear runway'} icon={CalendarClock} tone="amber" />
+        <MetricCard href="/applications?status=Interviewing" label="In conversation" value={summary.interviews} detail="Interviewing now" icon={Clock3} tone="blue" />
+        <MetricCard href="/applications?status=Offer" label="Offers" value={summary.offers} detail={summary.offers ? 'A strong signal' : 'Keep going'} icon={Trophy} tone="coral" />
       </div>
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,.8fr)]">
         <section className="rise-in rise-in-delay-2 overflow-hidden rounded-2xl border border-card-border bg-card shadow-[0_8px_30px_rgba(24,43,64,.045)]">
@@ -56,9 +61,9 @@ export default function Dashboard() {
   );
 }
 
-function MetricCard({ label, value, detail, icon: Icon, tone }: { label: string; value: number; detail: string; icon: typeof Target; tone: string }) {
+function MetricCard({ href, label, value, detail, icon: Icon, tone }: { href: string; label: string; value: number; detail: string; icon: typeof Target; tone: string }) {
   const colors: Record<string, string> = { mint: 'bg-[#d9eee6] text-[#257b61]', amber: 'bg-[#f7e4bc] text-[#ae741c]', blue: 'bg-[#dceaf4] text-[#337ba9]', coral: 'bg-[#f6dfdb] text-[#ba665b]' };
-  return <div className="group rounded-2xl border border-card-border bg-card p-4 shadow-[0_8px_30px_rgba(24,43,64,.035)] transition-transform hover:-translate-y-0.5"><div className="flex items-start justify-between"><span className={`grid size-8 place-items-center rounded-lg ${colors[tone]}`}><Icon className="size-4" /></span><span className="font-data text-[10px] text-muted-foreground/55">LIVE</span></div><p className="mt-4 font-display text-[28px] font-bold tracking-[-.06em]">{value}</p><p className="mt-0.5 text-[11px] font-bold text-foreground">{label}</p><p className="mt-1 text-[11px] text-muted-foreground">{detail}</p></div>;
+  return <Link href={href} aria-label={`View ${label.toLowerCase()}`} className="group block rounded-2xl border border-card-border bg-card p-4 shadow-[0_8px_30px_rgba(24,43,64,.035)] transition-transform hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_12px_34px_rgba(24,43,64,.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" data-testid={`metric-${label.toLowerCase().replaceAll(' ', '-')}`}><div className="flex items-start justify-between"><span className={`grid size-8 place-items-center rounded-lg ${colors[tone]}`}><Icon className="size-4" /></span><span className="font-data text-[10px] text-muted-foreground/55">VIEW</span></div><p className="mt-4 font-display text-[28px] font-bold tracking-[-.06em]">{value}</p><p className="mt-0.5 text-[11px] font-bold text-foreground">{label}</p><p className="mt-1 text-[11px] text-muted-foreground">{detail}</p></Link>;
 }
 
 function EmptyDashboard({ onAdd }: { onAdd: () => void }) { return <div className="px-6 py-16 text-center"><div className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#d9eee6] text-primary"><Plus className="size-5" /></div><p className="mt-4 text-sm font-bold">Your pipeline starts here</p><p className="mx-auto mt-1 max-w-xs text-xs leading-5 text-muted-foreground">Add the first opportunity and turn the blank page into a plan.</p><Button onClick={onAdd} variant="outline" size="sm" className="mt-4" data-testid="button-empty-add">Add your first application</Button></div>; }
