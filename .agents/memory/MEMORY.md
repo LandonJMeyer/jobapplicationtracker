@@ -1,0 +1,1 @@
+- [Workspace config integrity](workspace-config-integrity.md) — validate root manifests and compiler/workspace configs when all workflows fail before launch.
